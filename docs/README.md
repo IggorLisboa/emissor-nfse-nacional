@@ -12,4 +12,4 @@ No ambiente de homologação você pode testar com qualquer cidade e CPF/CNPJ v�
 
 ## API NFS-e
 
-- enviarDPS (Enviar DPS - Gera NFS-e)
+- enviarDPS (Gerar NFS-e)
