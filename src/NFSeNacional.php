@@ -231,7 +231,7 @@ class NFSeNacional
     }
 
     /**
-     * Trata exceÇÕES de requisiÇÃO HTTP
+     * Trata exceções de requisição HTTP
      */
     private function tratarExcecaoRequest(RequestException $e, string $prefixo): array
     {
