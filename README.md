@@ -1,6 +1,6 @@
 # NFS-e Nacional PHP
 
-A maneira simples de integrar PHP com a api NFS-e Nacional.
+Projeto completo utilizando comunicação com a API NFS-e do Ambiente Nacional. Essa biblioteca pode ser facilmente integrada ao seu software e/ou ERP.
 
 ## 📦 Instalação
 
@@ -16,6 +16,14 @@ composer update divulgueregional/api-nfse 1.0.0
 ```
 
 Acesse a pasta docs e leia o README.md
+
+## 📚 Documentação Completa
+
+Para detalhes profundos sobre a API NFSe ambiente nacional, consulte os portais oficiais:
+
+- **Portal da Nota Fiscal de Serviço eletrônica**: https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/apis-prod-restrita-e-producao
+- **Portal de Gestão NFS-e - Contribuinte (produção)**: https://www.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2fEmissorNacional
+- **Portal de Gestão NFS-e - Contribuinte (Ambiente de Produção Restrita-Homologação)**: https://www.producaorestrita.nfse.gov.br/EmissorNacional/Login?ReturnUrl=%2FEmissorNacional%2F
 
 ## O QUE VOCÊ PODE UTILIZAR
 
