@@ -9,8 +9,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
 /**
- * Classe para comunicaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o com a API do Sistema Nacional NFS-e
- * Baseada na documentaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o tÃƒÆ’Ã‚Â©cnica do SEFIN Nacional
+ * Classe para comunicação com a API do Sistema Nacional NFS-e
+ * Baseada na documentação técnica do SEFIN Nacional
  */
 class NFSeNacional
 {
@@ -29,7 +29,7 @@ class NFSeNacional
     // Namespace da NFS-e
     private const NS_NFSE = 'http://www.sped.fazenda.gov.br/nfse';
 
-    // VersÃƒÆ’Ã‚Â£o do aplicativo
+    // Versão do aplicativo
     private const VER_APLIC = 'ApiNfse_v1.0';
 
     private Client $client;
@@ -45,11 +45,11 @@ class NFSeNacional
     /**
      * Construtor da classe
      * 
-     * @param array $config ConfiguraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do certificado digital
+     * @param array $config Configurações do certificado digital
      *   - cert_path: Caminho do arquivo .pfx/.p12
      *   - cert_password: Senha do certificado
-     *   - cert_content: ConteÃƒÆ’Ã‚Âºdo do certificado em base64 (alternativa ao cert_path)
-     * @param int $tpAmb Tipo de ambiente (1=ProduÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o, 2=HomologaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o)
+     *   - cert_content: Conteúdo do certificado em base64 (alternativa ao cert_path)
+     * @param int $tpAmb Tipo de ambiente (1=Produção, 2=Homologação)
      */
     public function __construct(array $config, int $tpAmb = 2)
     {
@@ -113,11 +113,11 @@ class NFSeNacional
     }
 
     // =========================================================================
-    // MÃƒÆ’Ã¢â‚¬Â°TODOS PRINCIPAIS DA API
+    // MÉTODOS PRINCIPAIS DA API
     // =========================================================================
 
     /**
-     * Envia uma DPS (DeclaraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de PrestaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de ServiÃƒÆ’Ã‚Â§os) para gerar NFS-e
+     * Envia uma DPS (Declaração de Prestação de Serviços) para gerar NFS-e
      * POST /nfse
      * 
      * @param string $xmlDps XML da DPS assinado
@@ -184,6 +184,87 @@ class NFSeNacional
         }
     }
 
+    /**
+     * Consulta os dados detalhados de uma NFSe pela Chave de Acesso
+     * GET /nfse/{chaveAcesso}
+     */
+    public function consultarNFSePorChave(string $chaveAcesso): array
+    {
+        try {
+
+            $chaveAcesso = trim($chaveAcesso);
+
+            $url = $this->tpAmb === 1
+                ? "https://adn.nfse.gov.br/nfse/{$chaveAcesso}"
+                : "https://adn.producaorestrita.nfse.gov.br/contribuintes/NFSe/{$chaveAcesso}/Eventos";
+
+            $response = $this->client->get($url, [
+                'headers' => [
+                    'Accept' => 'application/json'
+                ]
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                throw new Exception("Falha na consulta da NFS-e");
+            }
+
+            $body = $response->getBody()->getContents();
+
+            return [
+                'codigo' => '000',
+                'mensagem' => 'Consulta realizada com sucesso',
+                'dados' => json_decode($body, true)
+            ];
+
+        } catch (RequestException $e) {
+            return $this->tratarExcecaoRequest($e, 'Erro ao consultar NFS-e');
+        } catch (Exception $e) {
+            return [
+                'codigo' => '999',
+                'mensagem' => 'Erro ao consultar NFS-e: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Download do PDF da NFS-e (DANFSE)
+     * GET /danfse/{chaveAcesso}
+     * 
+     * @param string $chaveAcesso Chave de acesso da NFS-e
+     * @return array Resultado com bytes do PDF
+     */
+    public function downloadDANFSe(string $chaveAcesso): array
+    {
+        try {
+            $chaveAcesso = trim($chaveAcesso);
+            $response = $this->client->get("{$this->urlDanfse}/{$chaveAcesso}", [
+                'headers' => [
+                    'Accept' => 'application/pdf'
+                ]
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                throw new Exception("Falha ao baixar DANFSe. Status: " . $response->getStatusCode());
+            }
+
+            $pdfContent = $response->getBody()->getContents();
+
+            return [
+                'codigo' => '000',
+                'mensagem' => 'PDF baixado com sucesso.',
+                'pdfContent' => $pdfContent,
+                'contentType' => $response->getHeaderLine('Content-Type')
+            ];
+
+        } catch (RequestException $e) {
+            return $this->tratarExcecaoRequest($e, 'Erro ao baixar DANFSE');
+        } catch (Exception $e) {
+            return [
+                'codigo' => '999',
+                'mensagem' => 'Erro ao baixar DANFSE: ' . $e->getMessage()
+            ];
+        }
+    }
 
     // =========================================================================
     // FUNÇÕES AUXILIARES
@@ -269,15 +350,5 @@ class NFSeNacional
             'bodyOriginal' => $bodyErro
         ];
     }
-
-
-
-
-
-
-
-
-
-
 
 }
