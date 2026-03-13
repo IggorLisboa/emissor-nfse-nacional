@@ -22,18 +22,15 @@ Busca o pdf da nota de serviço no Ambiente Nacional.
     $chaveAcesso = '';
 
     $retorno = $nfse->downloadDANFSe($chaveAcesso);
+    // Verificar se ocorreu erro 502 e tentar novamente
+    if (isset($retorno['codigo']) && $retorno['codigo'] == '502') {
+        // Esperar 1 segundo e tentar novamente
+            sleep(1);
+            $retorno = $nfse->downloadDANFSe($chaveAcesso);
+    }
 
     $pdfContent = $retorno['pdfContent']; // pdf
     $nomeArquivo = "{$chaveAcesso}.pdf";
-
-    // --- BLOCO PARA SALVAR LOCALMENTE ---
-    $diretorio = __DIR__ . '/pdf/'; // Define o caminho da pasta
-    
-    // Cria a pasta se ela não existir (com permissão de escrita)
-    if (!is_dir($diretorio)) {
-        mkdir($diretorio, 0775, true);
-    }
-
 
     // $modo = 'attachment'; // faz download
     $modo = 'inline'; // abre no navegador
