@@ -185,6 +185,33 @@ class NFSeNacional
     }
 
     /**
+     * Gera o IdDPS conforme padrÃ£o nacional
+     * Formato: DPS + cMun(7) + tpInsc(1) + CNPJ/CPF(14) + serie(5) + nDPS(15)
+     * 
+     * @param string $cMun CÃ³digo IBGE do municÃ­pio (7 dÃ­gitos)
+     * @param string $cnpjCpf CNPJ ou CPF do prestador
+     * @param int $serie SÃ©rie da DPS
+     * @param int $nDps NÃºmero da DPS
+     * @return string IdDPS com 45 caracteres
+     */
+    public function gerarIdDPS(string $cMun, string $cnpjCpf, int $serie, int $nDps): string
+    {
+        $cnpjCpf = $this->apenasNumeros($cnpjCpf);
+        $tpInsc = strlen($cnpjCpf) === 14 ? '1' : '2';
+
+        // Padroniza CNPJ/CPF para 14 dÃ­gitos
+        $cnpjCpf = str_pad($cnpjCpf, 14, '0', STR_PAD_LEFT);
+
+        // Padroniza sÃ©rie para 5 dÃ­gitos
+        $serieStr = str_pad((string)$serie, 5, '0', STR_PAD_LEFT);
+
+        // Padroniza nÃºmero para 15 dÃ­gitos
+        $nDpsStr = str_pad((string)$nDps, 15, '0', STR_PAD_LEFT);
+
+        return "DPS{$cMun}{$tpInsc}{$cnpjCpf}{$serieStr}{$nDpsStr}";
+    }
+    
+    /**
      * Consulta os dados detalhados de uma NFSe pela Chave de Acesso
      * GET /nfse/{chaveAcesso}
      */
