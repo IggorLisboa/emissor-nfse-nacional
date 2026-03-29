@@ -1,6 +1,6 @@
 <?php
 
-namespace Divulgueregional\ApiNfse;
+namespace iggorlisboa\EmissorNFSe;
 
 use DOMDocument;
 use DOMXPath;
