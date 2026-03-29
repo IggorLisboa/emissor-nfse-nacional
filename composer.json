@@ -1,6 +1,6 @@
 {
-    "name": "iggorlisboa/api-nfse",
-    "description": "Api para gerar nota fiscal de serviço no ambiente nacional.",
+    "name": "iggorlisboa/emissor-nfse-nacional",
+    "description": "Gerar nota fiscal de serviço no ambiente nacional.",
     "license": "MIT",
     "autoload": {
         "psr-4": {
