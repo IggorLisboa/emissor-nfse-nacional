@@ -3,3 +3,9 @@
 /references/*
 /nbproject/private/
 /nbproject/
+/vendor/
+node_modules/
+.env
+.DS_Store
+*.log
+composer.phar
