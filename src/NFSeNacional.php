@@ -14,7 +14,7 @@ use GuzzleHttp\Exception\RequestException;
  */
 class NFSeNacional
 {
-    // URLs de ProduÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
+    // URLs de producao
     private const URL_PRODUCAO = 'https://sefin.nfse.gov.br';
     private const URL_PRODUCAO_DANFSE = 'https://adn.nfse.gov.br/danfse';
     private const URL_PRODUCAO_CONSULTA_PUBLICA = 'https://www.nfse.gov.br/ConsultaPublica';
