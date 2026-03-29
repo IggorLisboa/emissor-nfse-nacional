@@ -20,7 +20,7 @@ class NFSeNacional
     private const URL_PRODUCAO_CONSULTA_PUBLICA = 'https://www.nfse.gov.br/ConsultaPublica';
     private const URL_PRODUCAO_PARAMETRIZACAO = 'https://adn.nfse.gov.br/parametrizacao';
 
-    // URLs de HomologaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
+    // URLs de Homologacao
     private const URL_HOMOLOGACAO = 'https://sefin.producaorestrita.nfse.gov.br';
     private const URL_HOMOLOGACAO_DANFSE = 'https://adn.producaorestrita.nfse.gov.br/danfse';
     private const URL_HOMOLOGACAO_CONSULTA_PUBLICA = 'https://adn.producaorestrita.nfse.gov.br/consultapublica';
