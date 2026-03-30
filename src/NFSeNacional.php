@@ -12,23 +12,20 @@ use GuzzleHttp\Exception\RequestException;
  * Classe para comunicação com a API do Sistema Nacional NFS-e
  * Baseada na documentação técnica do SEFIN Nacional
  */
-class NFSeNacional
-{
+class NFSeNacional {
+
     // URLs de producao
     private const URL_PRODUCAO = 'https://sefin.nfse.gov.br';
     private const URL_PRODUCAO_DANFSE = 'https://adn.nfse.gov.br/danfse';
     private const URL_PRODUCAO_CONSULTA_PUBLICA = 'https://www.nfse.gov.br/ConsultaPublica';
     private const URL_PRODUCAO_PARAMETRIZACAO = 'https://adn.nfse.gov.br/parametrizacao';
-
     // URLs de Homologacao
     private const URL_HOMOLOGACAO = 'https://sefin.producaorestrita.nfse.gov.br';
     private const URL_HOMOLOGACAO_DANFSE = 'https://adn.producaorestrita.nfse.gov.br/danfse';
     private const URL_HOMOLOGACAO_CONSULTA_PUBLICA = 'https://adn.producaorestrita.nfse.gov.br/consultapublica';
     private const URL_HOMOLOGACAO_PARAMETRIZACAO = 'https://adn.producaorestrita.nfse.gov.br/parametrizacao';
-
     // Namespace da NFS-e
     private const NS_NFSE = 'http://www.sped.fazenda.gov.br/nfse';
-
     // Versão do aplicativo
     private const VER_APLIC = 'ApiNfse_v1.0';
 
@@ -51,8 +48,7 @@ class NFSeNacional
      *   - cert_content: Conteúdo do certificado em base64 (alternativa ao cert_path)
      * @param int $tpAmb Tipo de ambiente (1=Produção, 2=Homologação)
      */
-    public function __construct(array $config, int $tpAmb = 2)
-    {
+    public function __construct(array $config, int $tpAmb = 2) {
         $this->tpAmb = $tpAmb;
 
         if ($tpAmb === 1) {
@@ -77,8 +73,7 @@ class NFSeNacional
     /**
      * Inicializa o cliente HTTP com certificado digital (mTLS)
      */
-    private function initClient(): void
-    {
+    private function initClient(): void {
         $options = [
             'base_uri' => $this->urlBase,
             'timeout' => 60,
@@ -98,13 +93,14 @@ class NFSeNacional
                 $tempPem = tempnam(sys_get_temp_dir(), 'cert_');
                 $pemData = $certs['cert'] . "\n" . $certs['pkey'];
                 file_put_contents($tempPem, $pemData);
-                
+
                 // Passamos o caminho do arquivo temporÃ¡rio para o Guzzle
                 $options['cert'] = [$tempPem, $this->certPassword];
-                
+
                 // Opcional: registrar para deletar o arquivo ao fim da execuÃ§Ã£o
-                register_shutdown_function(function() use ($tempPem) {
-                    if (file_exists($tempPem)) @unlink($tempPem);
+                register_shutdown_function(function () use ($tempPem) {
+                    if (file_exists($tempPem))
+                        @unlink($tempPem);
                 });
             }
         }
@@ -118,8 +114,7 @@ class NFSeNacional
      * @param array $dados Dados da DPS
      * @return string XML da DPS (sem assinatura)
      */
-    public function montarXmlDPS(array $dados): string
-    {
+    public function montarXmlDPS(array $dados): string {
         $ns = self::NS_NFSE;
 
         // Dados obrigatÃƒÆ’Ã‚Â³rios
@@ -157,7 +152,7 @@ class NFSeNacional
         $dps->appendChild($infDPS);
 
         // Campos obrigatÃƒÆ’Ã‚Â³rios
-        $this->addElement($xml, $infDPS, 'tpAmb', (string)$this->tpAmb);
+        $this->addElement($xml, $infDPS, 'tpAmb', (string) $this->tpAmb);
         $this->addElement($xml, $infDPS, 'dhEmi', $dhEmi);
         $this->addElement($xml, $infDPS, 'verAplic', self::VER_APLIC);
         $this->addElement($xml, $infDPS, 'serie', $serie);
@@ -189,13 +184,13 @@ class NFSeNacional
             $prestEl->appendChild($regTrib);
 
             if (isset($prest['regTrib']['opSimpNac'])) {
-                $this->addElement($xml, $regTrib, 'opSimpNac', (string)$prest['regTrib']['opSimpNac']);
+                $this->addElement($xml, $regTrib, 'opSimpNac', (string) $prest['regTrib']['opSimpNac']);
             }
             if (!empty($prest['regTrib']['regApTribSN'])) {
-                $this->addElement($xml, $regTrib, 'regApTribSN', (string)$prest['regTrib']['regApTribSN']);
+                $this->addElement($xml, $regTrib, 'regApTribSN', (string) $prest['regTrib']['regApTribSN']);
             }
             if (isset($prest['regTrib']['regEspTrib'])) {
-                $this->addElement($xml, $regTrib, 'regEspTrib', (string)$prest['regTrib']['regEspTrib']);
+                $this->addElement($xml, $regTrib, 'regEspTrib', (string) $prest['regTrib']['regEspTrib']);
             }
         }
 
@@ -209,6 +204,11 @@ class NFSeNacional
         if (!empty($toma['cpf'])) {
             $this->addElement($xml, $tomaEl, 'CPF', $this->apenasNumeros($toma['cpf']));
         }
+
+        if (!empty($toma['im'])) {
+            $this->addElement($xml, $tomaEl, 'IM', $this->apenasNumeros($toma['im']));
+        }
+
         if (!empty($toma['xNome'])) {
             $this->addElement($xml, $tomaEl, 'xNome', $toma['xNome']);
         }
@@ -281,25 +281,24 @@ class NFSeNacional
         // --- Tributos (Estrutura Final Validada) ---
         $trib = $xml->createElement('trib');
         $valoresEl->appendChild($trib); // trib entra em valores
-
         // 1. Tributos Municipais (ISSQN)
         $tribMun = $xml->createElement('tribMun');
         $trib->appendChild($tribMun);
-        
-        $tpRetISSQN = (string)($valores['tpRetISSQN'] ?? '1');
-        
-        $this->addElement($xml, $tribMun, 'tribISSQN', (string)($valores['tribISSQN'] ?? '1'));
+
+        $tpRetISSQN = (string) ($valores['tpRetISSQN'] ?? '1');
+
+        $this->addElement($xml, $tribMun, 'tribISSQN', (string) ($valores['tribISSQN'] ?? '1'));
         $this->addElement($xml, $tribMun, 'tpRetISSQN', $tpRetISSQN);
-        
+
         // REGRA E0625: SÃ³ envia alÃ­quota se houver retenÃ§Ã£o (tpRetISSQN != 1)
         // Ou se vocÃª nÃ£o for do Simples Nacional. 
         // Para o seu teste atual, vamos apenas comentar/remover o envio da pAliq:
         /* if (isset($valores['pAliq'])) {
-            $this->addElement($xml, $tribMun, 'pAliq', $this->formatarValor($valores['pAliq']));
-        }
-        */
+          $this->addElement($xml, $tribMun, 'pAliq', $this->formatarValor($valores['pAliq']));
+          }
+         */
 
-        
+
 
 
 
@@ -309,7 +308,7 @@ class NFSeNacional
 
         $piscofins = $xml->createElement('piscofins');
         $tribFed->appendChild($piscofins);
-        $this->addElement($xml, $piscofins, 'CST', '99'); 
+        $this->addElement($xml, $piscofins, 'CST', '99');
         $this->addElement($xml, $piscofins, 'vPis', '0.00');
         $this->addElement($xml, $piscofins, 'vCofins', '0.00');
 
@@ -318,11 +317,6 @@ class NFSeNacional
         // $this->addElement($xml, $tribFed, 'vRetCP', '0.00');
         // $this->addElement($xml, $tribFed, 'vRetIRRF', '0.00');
         // $this->addElement($xml, $tribFed, 'vRetCSLL', '0.00');
-
-
-
-
-
         // 3. Totais dos Tributos (SoluÃ§Ã£o para Simples Nacional / ME-EPP)
         $totTrib = $xml->createElement('totTrib');
         $trib->appendChild($totTrib);
@@ -345,8 +339,7 @@ class NFSeNacional
      * @param string $xmlDps XML da DPS assinado
      * @return array Resultado da operaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
      */
-    public function enviarDPS(string $xmlDps): array
-    {
+    public function enviarDPS(string $xmlDps): array {
         try {
             // Adiciona declaraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o XML se nÃƒÆ’Ã‚Â£o existir
             if (strpos($xmlDps, '<?xml') === false) {
@@ -391,11 +384,10 @@ class NFSeNacional
             }
 
             return [
-                'codigo' => (string)$statusCode,
+                'codigo' => (string) $statusCode,
                 'mensagem' => 'Erro ao enviar DPS.',
                 'bodyOriginal' => $body
             ];
-
         } catch (RequestException $e) {
             return $this->tratarExcecaoRequest($e, 'Erro ao enviar DPS');
         } catch (Exception $e) {
@@ -416,8 +408,7 @@ class NFSeNacional
      * @param int $nDps NÃºmero da DPS
      * @return string IdDPS com 45 caracteres
      */
-    public function gerarIdDPS(string $cMun, string $cnpjCpf, int $serie, int $nDps): string
-    {
+    public function gerarIdDPS(string $cMun, string $cnpjCpf, int $serie, int $nDps): string {
         $cnpjCpf = $this->apenasNumeros($cnpjCpf);
         $tpInsc = (strlen($cnpjCpf) === 14 ? '2' : '1');
 
@@ -425,10 +416,10 @@ class NFSeNacional
         $cnpjCpf = str_pad($cnpjCpf, 14, '0', STR_PAD_LEFT);
 
         // Padroniza sÃ©rie para 5 dÃ­gitos
-        $serieStr = str_pad((string)$serie, 5, '0', STR_PAD_LEFT);
+        $serieStr = str_pad((string) $serie, 5, '0', STR_PAD_LEFT);
 
         // Padroniza nÃºmero para 15 dÃ­gitos
-        $nDpsStr = str_pad((string)$nDps, 15, '0', STR_PAD_LEFT);
+        $nDpsStr = str_pad((string) $nDps, 15, '0', STR_PAD_LEFT);
 
         return "DPS{$cMun}{$tpInsc}{$cnpjCpf}{$serieStr}{$nDpsStr}";
     }
@@ -438,8 +429,7 @@ class NFSeNacional
      * * @param string $xml Elemento XML limpo
      * @return string XML assinado
      */
-    public function assinarXML(string $xml): string
-    {
+    public function assinarXML(string $xml): string {
         $dom = new DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;
@@ -448,7 +438,7 @@ class NFSeNacional
         // Identifica o nÃ³ que serÃ¡ assinado (infDPS)
         $node = $dom->getElementsByTagName('infDPS')->item(0);
         $id = $node->getAttribute('Id');
-        
+
         // Extrai a chave privada do certificado PFX
         $pfxContent = file_get_contents($this->certPath);
         openssl_pkcs12_read($pfxContent, $certs, $this->certPassword);
@@ -519,20 +509,17 @@ class NFSeNacional
 
         return $dom->saveXML();
     }
-    
+
     /**
      * Consulta os dados detalhados de uma NFSe pela Chave de Acesso
      * GET /nfse/{chaveAcesso}
      */
-    public function consultarNFSePorChave(string $chaveAcesso): array
-    {
+    public function consultarNFSePorChave(string $chaveAcesso): array {
         try {
 
             $chaveAcesso = trim($chaveAcesso);
 
-            $url = $this->tpAmb === 1
-                ? "https://adn.nfse.gov.br/nfse/{$chaveAcesso}"
-                : "https://adn.producaorestrita.nfse.gov.br/contribuintes/NFSe/{$chaveAcesso}/Eventos";
+            $url = $this->tpAmb === 1 ? "https://adn.nfse.gov.br/nfse/{$chaveAcesso}" : "https://adn.producaorestrita.nfse.gov.br/contribuintes/NFSe/{$chaveAcesso}/Eventos";
 
             $response = $this->client->get($url, [
                 'headers' => [
@@ -551,7 +538,6 @@ class NFSeNacional
                 'mensagem' => 'Consulta realizada com sucesso',
                 'dados' => json_decode($body, true)
             ];
-
         } catch (RequestException $e) {
             return $this->tratarExcecaoRequest($e, 'Erro ao consultar NFS-e');
         } catch (Exception $e) {
@@ -569,8 +555,7 @@ class NFSeNacional
      * @param string $chaveAcesso Chave de acesso da NFS-e
      * @return array Resultado com bytes do PDF
      */
-    public function downloadDANFSe(string $chaveAcesso): array
-    {
+    public function downloadDANFSe(string $chaveAcesso): array {
         try {
             $chaveAcesso = trim($chaveAcesso);
             $response = $this->client->get("{$this->urlDanfse}/{$chaveAcesso}", [
@@ -591,7 +576,6 @@ class NFSeNacional
                 'pdfContent' => $pdfContent,
                 'contentType' => $response->getHeaderLine('Content-Type')
             ];
-
         } catch (RequestException $e) {
             return $this->tratarExcecaoRequest($e, 'Erro ao baixar DANFSE');
         } catch (Exception $e) {
@@ -613,22 +597,22 @@ class NFSeNacional
      * @param string $xmlEventoAssinado XML do pedido de registro de evento assinado
      * @return array Resultado do cancelamento
      */
+
     /**
      * Cancela uma NFS-e enviando o evento assinado e compactado
      */
-    public function cancelarNFSe(string $chaveAcesso, string $cnpjAutor, int $cMotivo, string $xMotivo): array
-    {
+    public function cancelarNFSe(string $chaveAcesso, string $cnpjAutor, int $cMotivo, string $xMotivo): array {
         try {
             // 1. Gera o XML limpo
             $xmlLimpo = $this->montarXmlCancelamento($chaveAcesso, $cnpjAutor, $cMotivo, $xMotivo);
-            
+
             // 2. Assina o XML (passando a tag correta infPedReg)
             $xmlAssinado = $this->assinarXMLCan($xmlLimpo, 'infPedReg');
-            
+
             // 3. Compacta e Codifica (O segredo do sucesso)
             $gz = gzencode($xmlAssinado);
             $peloGzipB64 = base64_encode($gz);
-            
+
             $dados = [
                 'pedidoRegistroEventoXmlGZipB64' => $peloGzipB64
             ];
@@ -645,7 +629,6 @@ class NFSeNacional
                 'mensagem' => 'RequisiÃ§Ã£o de cancelamento enviada.',
                 'resposta' => json_decode($body, true)
             ];
-
         } catch (RequestException $e) {
             return $this->tratarExcecaoRequest($e, 'Erro ao cancelar NFS-e');
         } catch (Exception $e) {
@@ -662,8 +645,7 @@ class NFSeNacional
      * @param string $xMotivo DescriÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do motivo
      * @return string XML do pedido de evento (sem assinatura)
      */
-    public function montarXmlCancelamento(string $chaveAcesso, string $cnpjAutor, int $cMotivo, string $xMotivo): string
-    {
+    public function montarXmlCancelamento(string $chaveAcesso, string $cnpjAutor, int $cMotivo, string $xMotivo): string {
         $ns = self::NS_NFSE;
         $codEvento = '101101';
 
@@ -693,7 +675,7 @@ class NFSeNacional
         $infPedReg->setAttribute('Id', $idInfPed);
         $pedRegEvento->appendChild($infPedReg);
 
-        $this->addElement($xml, $infPedReg, 'tpAmb', (string)$this->tpAmb);
+        $this->addElement($xml, $infPedReg, 'tpAmb', (string) $this->tpAmb);
         $this->addElement($xml, $infPedReg, 'verAplic', self::VER_APLIC);
         $this->addElement($xml, $infPedReg, 'dhEvento', $dhEvento);
         $this->addElement($xml, $infPedReg, 'CNPJAutor', $this->apenasNumeros($cnpjAutor));
@@ -703,14 +685,13 @@ class NFSeNacional
         $infPedReg->appendChild($e101101);
 
         $this->addElement($xml, $e101101, 'xDesc', $xDesc);
-        $this->addElement($xml, $e101101, 'cMotivo', (string)$cMotivo);
+        $this->addElement($xml, $e101101, 'cMotivo', (string) $cMotivo);
         $this->addElement($xml, $e101101, 'xMotivo', $xMotivo ?: $motivoDescricao);
 
         return $xml->saveXML();
     }
 
-    public function assinarXMLCan(string $xml, string $rootTag = 'infPedReg'): string
-    {
+    public function assinarXMLCan(string $xml, string $rootTag = 'infPedReg'): string {
         $dom = new \DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false; // Importante: nÃ£o formatar para nÃ£o quebrar a assinatura
@@ -721,7 +702,7 @@ class NFSeNacional
         if (!$node) {
             throw new \Exception("Tag {$rootTag} nÃ£o encontrada no XML para assinatura.");
         }
-        
+
         $id = $node->getAttribute('Id');
 
         // 2. Extrai chaves do certificado
@@ -775,7 +756,7 @@ class NFSeNacional
         // 5. Signature Value (Assinatura do SignedInfo)
         $canonSignedInfo = $signedInfo->C14N(false, false);
         openssl_sign($canonSignedInfo, $signatureValue, $privateKey, OPENSSL_ALGO_SHA1);
-        
+
         $sv = $dom->createElement('SignatureValue', base64_encode($signatureValue));
         $signature->appendChild($sv);
 
@@ -795,8 +776,7 @@ class NFSeNacional
      * @param string|null $cnpjConsulta CNPJ a ser consultado (opcional se for o do certificado)
      * @param bool $lote Define se deve retornar um lote de documentos ou apenas um
      */
-    public function baixarDfeContribuinte(int $nsu = 0, ?string $cnpjConsulta = null, bool $lote = true): array
-    {
+    public function baixarDfeContribuinte(int $nsu = 0, ?string $cnpjConsulta = null, bool $lote = true): array {
         try {
             $queryParams = [];
             if ($cnpjConsulta) {
@@ -815,14 +795,13 @@ class NFSeNacional
             ]);
 
             $body = $response->getBody()->getContents();
-            
+
             return [
                 'codigo' => '000',
                 'mensagem' => 'Consulta de DF-e realizada.',
                 'dados' => json_decode($body, true),
                 'bodyOriginal' => $body
             ];
-
         } catch (RequestException $e) {
             return $this->tratarExcecaoRequest($e, 'Erro ao baixar DFe');
         } catch (Exception $e) {
@@ -840,8 +819,7 @@ class NFSeNacional
     /**
      * Compacta string com GZip e codifica em Base64
      */
-    private function toGzipBase64(string $data): string
-    {
+    private function toGzipBase64(string $data): string {
         $compressed = gzencode($data, 9);
         return base64_encode($compressed);
     }
@@ -849,8 +827,7 @@ class NFSeNacional
     /**
      * Decodifica Base64 e descompacta GZip
      */
-    private function fromGzipBase64(string $data): string
-    {
+    private function fromGzipBase64(string $data): string {
         $decoded = base64_decode($data);
         return gzdecode($decoded);
     }
@@ -858,8 +835,7 @@ class NFSeNacional
     /**
      * Remove acentos de uma string
      */
-    private function removerAcentos(string $string): string
-    {
+    private function removerAcentos(string $string): string {
         $acentos = [
             'ÃƒÆ’Ã‚Â¡', 'ÃƒÆ’Ã‚Â ', 'ÃƒÆ’Ã‚Â£', 'ÃƒÆ’Ã‚Â¢', 'ÃƒÆ’Ã‚Â¤', 'ÃƒÆ’Ã‚Â©', 'ÃƒÆ’Ã‚Â¨', 'ÃƒÆ’Ã‚Âª', 'ÃƒÆ’Ã‚Â«', 'ÃƒÆ’Ã‚Â­', 'ÃƒÆ’Ã‚Â¬', 'ÃƒÆ’Ã‚Â®', 'ÃƒÆ’Ã‚Â¯',
             'ÃƒÆ’Ã‚Â³', 'ÃƒÆ’Ã‚Â²', 'ÃƒÆ’Ã‚Âµ', 'ÃƒÆ’Ã‚Â´', 'ÃƒÆ’Ã‚Â¶', 'ÃƒÆ’Ã‚Âº', 'ÃƒÆ’Ã‚Â¹', 'ÃƒÆ’Ã‚Â»', 'ÃƒÆ’Ã‚Â¼', 'ÃƒÆ’Ã‚Â§', 'ÃƒÆ’Ã‚Â±',
@@ -879,8 +855,7 @@ class NFSeNacional
     /**
      * Extrai o número da NFS-e (nDFSe) do XML
      */
-    private function extrairNDFSe(string $xmlNfse): ?string
-    {
+    private function extrairNDFSe(string $xmlNfse): ?string {
         try {
             $dom = new DOMDocument();
             $dom->loadXML($xmlNfse);
@@ -902,8 +877,7 @@ class NFSeNacional
     /**
      * Trata exceções de requisição HTTP
      */
-    private function tratarExcecaoRequest(RequestException $e, string $prefixo): array
-    {
+    private function tratarExcecaoRequest(RequestException $e, string $prefixo): array {
         $httpStatus = 0;
         $bodyErro = '';
         $codErro = '';
@@ -932,7 +906,7 @@ class NFSeNacional
         }
 
         return [
-            'codigo' => $httpStatus > 0 ? (string)$httpStatus : '999',
+            'codigo' => $httpStatus > 0 ? (string) $httpStatus : '999',
             'mensagem' => "{$prefixo}: " . ($codErro ? "{$codErro} - " : '') . $msgErro,
             'codigoErro' => $codErro,
             'bodyOriginal' => $bodyErro
@@ -942,16 +916,14 @@ class NFSeNacional
     /**
      * Remove caracteres nÃƒÆ’Ã‚Â£o numÃƒÆ’Ã‚Â©ricos
      */
-    private function apenasNumeros(string $valor): string
-    {
+    private function apenasNumeros(string $valor): string {
         return preg_replace('/[^0-9]/', '', $valor);
     }
 
     /**
      * Adiciona elemento ao XML
      */
-    private function addElement(DOMDocument $dom, \DOMElement $parent, string $name, string $value): void
-    {
+    private function addElement(DOMDocument $dom, \DOMElement $parent, string $name, string $value): void {
         if ($value !== '') {
             $element = $dom->createElement($name, htmlspecialchars($value, ENT_XML1, 'UTF-8'));
             $parent->appendChild($element);
@@ -961,8 +933,7 @@ class NFSeNacional
     /**
      * Formata valor decimal para 2 casas
      */
-    private function formatarValor($valor): string
-    {
-        return number_format((float)$valor, 2, '.', '');
+    private function formatarValor($valor): string {
+        return number_format((float) $valor, 2, '.', '');
     }
 }
